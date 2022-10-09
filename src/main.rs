@@ -1,13 +1,14 @@
 use simulation::ai::neural::Neural;
+use simulation::field::Field;
+use simulation::{HEIGHT, WIDTH};
+use std::io;
+use std::io::Write;
 
 fn main() {
-    let input_layers_num = 2;
-    let layers_num = 15;
-    let layers_size = 5;
-    let output_layers_num = 5;
+    let mut field = Field::new(WIDTH, HEIGHT);
 
-    let neural = Neural::new(input_layers_num, layers_num, layers_size, output_layers_num);
-    println!("{:?}", neural.execute(vec![1.0, 0.0]));
-    let neural = neural.mutate();
-    println!("{:?}", neural.execute(vec![1.0, 0.0]));
+    loop {
+        field.step();
+        field.draw();
+    }
 }
