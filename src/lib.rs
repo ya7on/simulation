@@ -5,8 +5,8 @@ pub mod ai {
 pub mod bot;
 pub mod field;
 
-pub const WIDTH: usize = 35;
-pub const HEIGHT: usize = 167;
+pub const WIDTH: usize = 160;
+pub const HEIGHT: usize = 120;
 
 // pub const WIDTH: usize = 25;
 // pub const HEIGHT: usize = 50;

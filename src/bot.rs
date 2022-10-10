@@ -1,6 +1,7 @@
 use crate::ai::neural::Neural;
 use crate::field::{Cell, OtherBot};
 use rand::Rng;
+use sdl2::libc::rand;
 
 pub enum Action {
     Move,
@@ -20,14 +21,14 @@ pub struct Bot {
 impl Bot {
     pub fn new() -> Self {
         let input_layers_num = 5;
-        let layers_num = 15;
+        let layers_num = 5;
         let layers_size = 5;
         let output_layers_num = 4;
 
         Self {
             brain: Neural::new(input_layers_num, layers_num, layers_size, output_layers_num),
             energy: 10,
-            id: 1,
+            id: rand::thread_rng().gen_range(0..10),
             color: (0, 0, 0),
         }
     }
@@ -88,9 +89,7 @@ impl Bot {
 
     pub fn mutate(&self) -> Self {
         let mut new_me = self.clone();
-        if rand::thread_rng().gen_range(0..100) < 10 {
-            new_me.energy = 10;
-        }
+        new_me.energy = self.energy;
         if rand::thread_rng().gen_range(0..100) < 2 {
             new_me.brain.mutate();
             new_me.id = new_me.id + 1;
