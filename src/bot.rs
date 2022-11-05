@@ -1,5 +1,5 @@
 use crate::ai::neural::Neural;
-use crate::field::{Cell, OtherBot};
+use crate::field::OtherBot;
 use rand::Rng;
 
 pub enum Action {
@@ -20,14 +20,14 @@ pub struct Bot {
 impl Bot {
     pub fn new() -> Self {
         let input_layers_num = 5;
-        let layers_num = 15;
+        let layers_num = 5;
         let layers_size = 5;
         let output_layers_num = 4;
 
         Self {
             brain: Neural::new(input_layers_num, layers_num, layers_size, output_layers_num),
             energy: 10,
-            id: 1,
+            id: rand::thread_rng().gen_range(0..10),
             color: (0, 0, 0),
         }
     }
@@ -41,7 +41,7 @@ impl Bot {
             } else if emptiness == &0 {
                 let result = self.brain.execute(vec![
                     self.id as f64 / 10.0,
-                    self.energy as f64 / 5.0,
+                    self.energy as f64 / 10.0,
                     direction.clone() as f64 / 8.0,
                     0.0,
                     0.0,
@@ -66,10 +66,10 @@ impl Bot {
                 if let Some(other) = other {
                     let result = self.brain.execute(vec![
                         self.id as f64 / 10.0,
-                        self.energy as f64 / 5.0,
+                        self.energy as f64 / 10.0,
                         direction.clone() as f64 / 8.0,
                         other.id as f64 / 10.0,
-                        other.energy as f64 / 5.0,
+                        other.energy as f64 / 10.0,
                     ]);
 
                     let attack = result.get(2).unwrap();
@@ -88,10 +88,8 @@ impl Bot {
 
     pub fn mutate(&self) -> Self {
         let mut new_me = self.clone();
-        if rand::thread_rng().gen_range(0..100) < 10 {
-            new_me.energy = 10;
-        }
-        if rand::thread_rng().gen_range(0..100) < 2 {
+        new_me.energy = self.energy;
+        if rand::thread_rng().gen_range(0..100) < 20 {
             new_me.brain.mutate();
             new_me.id = new_me.id + 1;
             if new_me.id > 9 {

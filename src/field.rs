@@ -1,10 +1,9 @@
 use crate::bot::{Action, Bot};
-use crate::{HEIGHT, WIDTH};
-use colored::Colorize;
+use crate::conf::get_conf;
 use rand::Rng;
-use std::borrow::BorrowMut;
+use sdl2::rect::Rect;
+use sdl2::render::WindowCanvas;
 use std::collections::HashMap;
-use std::io::{BufWriter, StdoutLock, Write};
 
 #[derive(Clone, Debug)]
 pub enum Cell {
@@ -42,7 +41,7 @@ impl Field {
                             .map(|y| {
                                 (
                                     y,
-                                    if rand::thread_rng().gen_range(0..100) < 5 {
+                                    if rand::thread_rng().gen_range(0..1000) < 5 {
                                         Cell::Bot(Bot::new())
                                     } else {
                                         Cell::Empty
@@ -57,7 +56,8 @@ impl Field {
     }
 
     fn get_cell(&self, x: isize, y: isize) -> (i8, Option<OtherBot>) {
-        if x >= 0 && y >= 0 && x < WIDTH as isize - 1 && y < HEIGHT as isize - 1 {
+        let c = get_conf();
+        if x >= 0 && y >= 0 && x < c.field_width as isize - 1 && y < c.field_height as isize - 1 {
             match self
                 .cells
                 .get(&(x as usize))
@@ -143,7 +143,7 @@ impl Field {
                     if let Cell::Bot(bot) =
                         self.cells.get_mut(&new_x).unwrap().get_mut(&new_y).unwrap()
                     {
-                        bot.energy -= 2
+                        bot.energy -= 2;
                     }
 
                     if let Cell::Bot(bot) = self.cells.get(&new_x).unwrap().get(&new_y).unwrap() {
@@ -170,11 +170,11 @@ impl Field {
                         .insert(format!("{}:{}", new_x, new_y), Color::Green);
 
                     if let Cell::Bot(bot) = self.cells.get_mut(&x).unwrap().get_mut(&y).unwrap() {
-                        bot.energy -= 4;
-                    }
+                        bot.energy -= 2;
+                    };
 
                     if let Cell::Bot(bot) = self.cells.get(&x).unwrap().get(&y).unwrap() {
-                        if bot.energy <= 0 {
+                        if bot.energy <= 1 {
                             self.cells.get_mut(&x).unwrap().remove(&y);
                             self.cells
                                 .get_mut(&x)
@@ -202,7 +202,17 @@ impl Field {
                     if let Cell::Bot(bot) =
                         self.cells.get_mut(&new_x).unwrap().get_mut(&new_y).unwrap()
                     {
-                        bot.energy -= 1
+                        bot.energy += 1;
+                    }
+
+                    if let Cell::Bot(bot) = self.cells.get(&x).unwrap().get(&y).unwrap() {
+                        if bot.energy <= 0 {
+                            self.cells.get_mut(&x).unwrap().remove(&y);
+                            self.cells
+                                .get_mut(&x)
+                                .unwrap()
+                                .insert(y.clone(), Cell::Empty);
+                        }
                     }
                 }
                 Action::Heal => {
@@ -223,67 +233,52 @@ impl Field {
         }
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, canvas: &mut WindowCanvas) {
         let max_x = self.cells.len();
-        for _ in (0..HEIGHT) {
-            print!("_");
-        }
-        print!("\n");
         for x in 0..max_x {
-            let mut line_output = "";
             let line = self.cells.get(&x).unwrap();
             let max_y = line.len();
             for y in 0..max_y {
                 let cell = line.get(&y).unwrap();
 
+                let draw_x = x as i32 * 5;
+                let draw_y = y as i32 * 5;
+                let draw_w = 5;
+                let draw_h = 5;
+
+                let rect = Rect::new(draw_x, draw_y, draw_w, draw_h);
+
                 match cell {
-                    Cell::Empty => print!(" "),
-                    Cell::Bot(bot) => print!(
-                        "{}",
+                    Cell::Empty => {}
+                    Cell::Bot(bot) => {
+                        canvas.set_draw_color(sdl2::pixels::Color::RGB(
+                            bot.color.0,
+                            bot.color.1,
+                            bot.color.2,
+                        ));
+                        canvas.fill_rect(rect).unwrap();
                         match self
                             .colors
                             .get(&format!("{}:{}", x, y))
                             .unwrap_or(&Color::None)
                         {
                             Color::None => {
-                                format!("{}", bot.id).normal().on_truecolor(
-                                    bot.color.0,
-                                    bot.color.1,
-                                    bot.color.2,
-                                )
+                                canvas.set_draw_color(sdl2::pixels::Color::WHITE);
                             }
                             Color::Green => {
-                                format!("{}", bot.id).green().on_truecolor(
-                                    bot.color.0,
-                                    bot.color.1,
-                                    bot.color.2,
-                                )
+                                canvas.set_draw_color(sdl2::pixels::Color::GREEN);
                             }
                             Color::Yellow => {
-                                format!("{}", bot.id).yellow().on_truecolor(
-                                    bot.color.0,
-                                    bot.color.1,
-                                    bot.color.2,
-                                )
+                                canvas.set_draw_color(sdl2::pixels::Color::YELLOW);
                             }
                             Color::Red => {
-                                format!("{}", bot.id).red().on_truecolor(
-                                    bot.color.0,
-                                    bot.color.1,
-                                    bot.color.2,
-                                )
+                                canvas.set_draw_color(sdl2::pixels::Color::RED);
                             }
-                        }
-                    ),
+                        };
+                        canvas.draw_rect(rect).unwrap();
+                    }
                 };
             }
-            print!("|\n");
         }
-        // for (x, line) in self.cells.iter() {
-        //     for (y, cell) in line {
-        //         print!("{}:{} ", x, y);
-        //     }
-        // }
-        print!("{}[2J", 27 as char);
     }
 }
