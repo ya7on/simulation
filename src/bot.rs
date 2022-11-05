@@ -1,7 +1,6 @@
 use crate::ai::neural::Neural;
-use crate::field::{Cell, OtherBot};
+use crate::field::OtherBot;
 use rand::Rng;
-use sdl2::libc::rand;
 
 pub enum Action {
     Move,
@@ -42,7 +41,7 @@ impl Bot {
             } else if emptiness == &0 {
                 let result = self.brain.execute(vec![
                     self.id as f64 / 10.0,
-                    self.energy as f64 / 5.0,
+                    self.energy as f64 / 10.0,
                     direction.clone() as f64 / 8.0,
                     0.0,
                     0.0,
@@ -67,10 +66,10 @@ impl Bot {
                 if let Some(other) = other {
                     let result = self.brain.execute(vec![
                         self.id as f64 / 10.0,
-                        self.energy as f64 / 5.0,
+                        self.energy as f64 / 10.0,
                         direction.clone() as f64 / 8.0,
                         other.id as f64 / 10.0,
-                        other.energy as f64 / 5.0,
+                        other.energy as f64 / 10.0,
                     ]);
 
                     let attack = result.get(2).unwrap();
@@ -90,7 +89,7 @@ impl Bot {
     pub fn mutate(&self) -> Self {
         let mut new_me = self.clone();
         new_me.energy = self.energy;
-        if rand::thread_rng().gen_range(0..100) < 2 {
+        if rand::thread_rng().gen_range(0..100) < 20 {
             new_me.brain.mutate();
             new_me.id = new_me.id + 1;
             if new_me.id > 9 {

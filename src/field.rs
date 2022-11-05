@@ -1,11 +1,9 @@
 use crate::bot::{Action, Bot};
-use crate::{HEIGHT, WIDTH};
+use crate::conf::get_conf;
 use rand::Rng;
 use sdl2::rect::Rect;
 use sdl2::render::WindowCanvas;
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
-use std::io::{BufWriter, StdoutLock, Write};
 
 #[derive(Clone, Debug)]
 pub enum Cell {
@@ -43,7 +41,7 @@ impl Field {
                             .map(|y| {
                                 (
                                     y,
-                                    if rand::thread_rng().gen_range(0..100) < 5 {
+                                    if rand::thread_rng().gen_range(0..1000) < 5 {
                                         Cell::Bot(Bot::new())
                                     } else {
                                         Cell::Empty
@@ -58,7 +56,8 @@ impl Field {
     }
 
     fn get_cell(&self, x: isize, y: isize) -> (i8, Option<OtherBot>) {
-        if x >= 0 && y >= 0 && x < WIDTH as isize - 1 && y < HEIGHT as isize - 1 {
+        let c = get_conf();
+        if x >= 0 && y >= 0 && x < c.field_width as isize - 1 && y < c.field_height as isize - 1 {
             match self
                 .cells
                 .get(&(x as usize))
@@ -144,7 +143,7 @@ impl Field {
                     if let Cell::Bot(bot) =
                         self.cells.get_mut(&new_x).unwrap().get_mut(&new_y).unwrap()
                     {
-                        bot.energy -= 1;
+                        bot.energy -= 2;
                     }
 
                     if let Cell::Bot(bot) = self.cells.get(&new_x).unwrap().get(&new_y).unwrap() {
@@ -171,7 +170,7 @@ impl Field {
                         .insert(format!("{}:{}", new_x, new_y), Color::Green);
 
                     if let Cell::Bot(bot) = self.cells.get_mut(&x).unwrap().get_mut(&y).unwrap() {
-                        bot.energy -= 1;
+                        bot.energy -= 2;
                     };
 
                     if let Cell::Bot(bot) = self.cells.get(&x).unwrap().get(&y).unwrap() {
@@ -218,7 +217,7 @@ impl Field {
                 }
                 Action::Heal => {
                     if let Cell::Bot(bot) = self.cells.get_mut(&x).unwrap().get_mut(&y).unwrap() {
-                        bot.energy -= 0;
+                        bot.energy -= 1;
                     }
                     if let Cell::Bot(bot) = self.cells.get(&x).unwrap().get(&y).unwrap() {
                         if bot.energy <= 0 {
